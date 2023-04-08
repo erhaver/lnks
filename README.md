@@ -1,15 +1,18 @@
-lnks - bookmark manager
-Based on 
-https://github.com/fehawen/bkm
-https://github.com/hamvocke/lnks
-======================
+# lnks - bookmark manager
 
 A simple CLI bookmark manager that stores bookmarks in plain text file.
+I used the code of the following projects:
+
+[fehawen/bkm](https://github.com/fehawen/bkm)
+
+[hamvocke/lnks](https://github.com/hamvocke/lnks)
+
+------------
+
+## Installation
 
 You need to install fzf first.
 
-Installation
-------------
 Install fzf
 
 ```
@@ -23,14 +26,14 @@ Install lnks
 ```
 $ make install
 ```
+
 Define where bookmarks are kept with BKM_FILE in $SHELL's startup file.
 
 ```
 export BKM_FILE=~/.bookmarks/bkm.txt
 ```
 
-Usage
------
+## Usage
 
 ```
 a|add [name] [url]  - Add bookmark.
