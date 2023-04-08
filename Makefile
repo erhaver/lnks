@@ -2,10 +2,10 @@ PREFIX ?= /usr
 BINDIR ?= $(PREFIX)/bin
 
 all:
-	@echo RUN \'make install\' to install bkm
+	@echo RUN \'make install\' to install lnks
 
 install:
-	@install -Dm 755 bkm $(DESTDIR)$(BINDIR)/bkm
+	@install -Dm 755 lnks $(DESTDIR)$(BINDIR)/lnks
 
 uninstall:
-	@rm -f $(DESTDIR)$(BINDIR)/bkm
+	@rm -f $(DESTDIR)$(BINDIR)/lnks
