@@ -1,41 +1,40 @@
-bkm - bookmark manager
+lnks - bookmark manager
+Based on 
+https://github.com/fehawen/bkm
+https://github.com/hamvocke/lnks
 ======================
 
-A simple CLI bookmark manager that stores bookmarks under categories in plain
-text files.
+A simple CLI bookmark manager that stores bookmarks in plain text file.
 
-It's ridiculously naive in its implementation. Very, very simple - almost to a
-point where it might actually be easier for you to just keep a text file with
-bookmarks and edit said file manually. But then again, a CLI always sparks a bit
-bit of geeky joy.
-
-Written in POSIX `sh`, with the exception of `sed -i`.
-
-And it might not work on some *BSDs due to `sed` implementation differences.
-
-So, let's just say it's POSIX-ish, and works on some machines.
-
+You need to install fzf first.
 
 Installation
 ------------
+Install fzf
 
-Install bkm
+```
+sudo apt install fzf # Ubuntu
+sudo dnf install fzf # Fedora
+sudo pacman -S fzf # Arch
+```
 
-    $ make install
+Install lnks
 
-Define where bookmarks are kept with BKM_DIR in $SHELL's startup file.
+```
+$ make install
+```
+Define where bookmarks are kept with BKM_FILE in $SHELL's startup file.
 
-    export BKM_DIR=~/.bookmarks
-
+```
+export BKM_FILE=~/.bookmarks/bkm.txt
+```
 
 Usage
 -----
 
-a|add [category].[name] [url]   Add bookmark.
-e|edit [category].[name]        Edit bookmark.
-o|open [category].[name]        Open bookmark in $BROWSER.
-l|list                          List all bookmarks.
-l|list [category]               List bookmarks in category.
-c|categories                    List categories.
-d|delete [category].[name]      Delete bookmark from category.
-d|delete [category]             Delete entire category.
+```
+a|add [name] [url]  - Add bookmark.
+e|edit [name]       - Edit bookmark.
+o|open              - Open bookmark with fzf search
+d|delete [name]     - Delete bookmark.
+```
