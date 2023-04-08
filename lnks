@@ -1,0 +1,354 @@
+#!/usr/bin/env bash
+
+new_file() {
+  mkdir -p $(dirname $1)
+  touch $(basename $1)
+}
+
+delete_entry() {
+    while IFS=' ' read -r n u; do
+        i=$((i+1))
+
+        [ "$name" = "$n" ] && {
+            url="$u"
+            index="$i"
+        }
+
+        continue
+    done < "$BKM_FILE"
+
+    unset i
+
+    [ -z "$index" ] && die "Bookmark $name not found"
+
+    msg "Found bookmark:" \
+        "$name" "$url"
+
+    printf 'Delete it? [y/n]: '
+    answer=$(read_input "")
+
+    case $answer in
+        'y'*|'Y'*) ;;
+        *) die "Quitting." ;;
+    esac
+
+    unset answer
+
+    remove_line_by_index "$index"
+    remove_empty_lines
+
+    log "Bookmark deleted."
+}
+
+bkm_delete() {
+    value_or_die "$name" "name"
+    file_or_die "$BKM_FILE"
+
+    if [ -n "$name" ]; then
+        delete_entry
+    else
+        printf 'Delete bookmark %s? [y/n]: ' "$name"
+        answer=$(read_input "")
+
+        case $answer in
+            'y'*|'Y'*) ;;
+            *) die "Quitting." ;;
+        esac
+
+        unset answer
+
+        rm -f "$BKM_FILE"
+        log "Bookmark deleted."
+    fi
+}
+
+remove_line_by_index() {
+    sed -i "${1}d" "$BKM_FILE"
+}
+
+remove_empty_lines() {
+    sed -i "/^$/d" "$BKM_FILE"
+}
+
+file_or_die() {
+    [ -f "$1" ] || die "File ${1} not found."
+}
+
+bkm_edit() {
+    name_or_die
+    file_or_die "$BKM_FILE"
+
+    while IFS=' ' read -r n u; do
+        i=$((i+1))
+
+        [ "$name" = "$n" ] && {
+            url="$u"
+            index="$i"
+        }
+
+        continue
+    done < "$BKM_FILE"
+
+    unset i
+
+    [ -z "$index" ] && die "Bookmark $name not found."
+
+    msg "Editing bookmark:" "$name" "$url"
+
+    printf 'Edit name (or press Enter to leave unchanged): '
+    name=$(read_input "$name")
+
+    printf 'Edit URL (or press Enter to leave unchanged): '
+    url=$(read_input "$url")
+
+    resolve_duplicates
+
+    remove_line_by_index "$index"
+    remove_empty_lines
+    write_to_file
+
+    msg "Bookmark saved:" "$name" "$url"
+}
+
+read_input() {
+    old=$1
+
+    read -r new
+
+    if [ -n "$new" ] && [ "$new" != "$old" ]; then
+        new=$(sanitize "$new")
+        printf '%s\n' "$new"
+    else
+        printf '%s\n' "$old"
+    fi
+}
+value_exists() {
+    match_against="$1"
+    skip_index="$2"
+
+    seen=0
+
+    while IFS=' ' read -r n u; do
+        i=$((i+1))
+
+        [ "$match_against" = "name" ] && \
+        [ "$name" = "$n" ] && \
+        [ "$skip_index" != "$i" ] && {
+            seen=1
+            existing_name="$n"
+            existing_url="$u"
+
+            break
+        }
+
+        [ "$match_against" = "url" ] && \
+        [ "$url" = "$u" ] && \
+        [ "$skip_index" != "$i" ] && {
+            seen=1
+            existing_name="$n"
+            existing_url="$u"
+
+            break
+        }
+
+        [ $seen -eq 1 ]
+    done < "$BKM_FILE"
+
+    unset i
+
+    [ $seen -eq 1 ] && return 0
+
+    return 1
+}
+truncate() {
+    set +f
+    # shellcheck disable=2048,2086
+    set -f -- $*
+
+    printf '%s\n' "$*"
+}
+
+trim() {
+    printf '%s\n' "$1" | sed "s/ //g"
+}
+
+sanitize() {
+    str=$1
+    str=$(truncate "$str")
+    str=$(trim "$str")
+
+    printf '%s\n' "$str"
+}
+log() {
+    printf '%s\n' "$@"
+}
+
+die() {
+    log "$1"
+    exit 1
+}
+
+msg() {
+    log "$1"  "  • $2 ─ $3"
+}
+
+write_to_file() {
+    printf '%s %s\n' "$name" "$url" >> "$BKM_FILE" || {
+        die "Failed to write bookmark to file ${BKM_FILE}."
+    }
+}
+
+resolve_duplicates() {
+    [ -f "$BKM_FILE" ] || {
+        :> "$BKM_FILE"
+        return
+    }
+
+    value_exists "name" "$index" && {
+        msg "Duplicate name found:" \
+            "$existing_name" "$existing_url"
+
+        printf 'Enter another name (or type Ctrl+C to abort): '
+        new_name=$(read_input "$existing_name")
+
+        [ -n "$new_name" ] && name="$new_name"
+
+        resolve_duplicates
+
+        #
+        # If we don't return, the url-duplicate check
+        # will run twice since the function did not get
+        # to finish before it invoked itself again in
+        # the line above.
+        #
+        return
+    }
+
+    value_exists "url" "$index" && {
+        msg "Duplicate URL found:" \
+            "$existing_name" "$existing_url"
+
+        printf 'Continue anyway? [y/n]: '
+        answer=$(read_input "")
+
+        case $answer in
+            'y'*|'Y'*) ;;
+            *) die "Quitting." ;;
+        esac
+
+        unset answer
+    }
+}
+
+is_url() {
+    printf '%s\n' "$1" | grep -q -e "http://" -e "https://" -e "www." && {
+        return 0
+    }
+
+    return 1
+}
+
+url_or_die() {
+    is_url "${1:-""}" || die "URL is required and must have valid format."
+}
+
+value_or_die() {
+    [ -n "$1" ] || die "Argument '$2' is required."
+}
+
+name_or_die() {
+    value_or_die "$name" "name"
+}
+
+bkm_add() {
+    name_or_die
+    url_or_die "$url"
+
+    resolve_duplicates
+
+    write_to_file
+
+    msg "Bookmark saved:" \
+        "$name" "$url"
+}
+
+bkm_open() {
+
+set -o pipefail
+set -o errexit
+set -o nounset
+
+if ! [ -x "$(command -v fzf)" ]; then
+    echo "fzf is not installed"
+    exit 1
+fi
+
+keep_open=false
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -k|--keep-open) keep_open=true ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+case "$OSTYPE" in
+  darwin*)  open_command="open" ;;
+  linux*)   open_command="xdg-open" ;;
+  *)        echo "unsupported OS: $OSTYPE" && exit 1 ;;
+esac
+
+enter_command="enter:execute-silent(${open_command} {-1})"
+
+
+if [ "$keep_open" = false ]; then
+    enter_command="${enter_command}+abort"
+fi
+
+cat ${BKM_FILE} | fzf \
+  --border=rounded \
+  --margin=5% \
+  --prompt="Search Bookmarks > " \
+  --with-nth='1..-2' \
+  --bind="${enter_command}" \
+  --preview='echo {-1}' \
+  --preview-window='up,1'
+}
+
+
+usage() {
+printf %s "\
+
+a|add [name] [url]  - Add bookmark.
+e|edit [name]       - Edit bookmark.
+o|open              - Open bookmarks list.
+d|delete [name]     - Delete bookmark.
+
+Define bookmarks file:      export BKM_FILE=~/.bookmarks/bkm.txt
+"
+exit
+}
+
+main() {
+    action=$1
+    name=$(sanitize "$2")
+    url=$(sanitize "$3")
+    #BKM_FILE="/home/uk/docs/projects/lnks/bkm.txt"
+    [ -z "$BKM_FILE" ] && die "\$BKM_FILE is not set."
+    ! [ -f "$BKM_FILE" ] && new_file "$BKM_FILE"
+
+    index=
+    existing_name=
+    existing_url=
+
+    case $action in
+        a|add) bkm_add ;;
+        e|edit) bkm_edit ;;
+        d|delete) bkm_delete ;;
+        o|open) bkm_open ;;
+        *) usage ;;
+    esac
+}
+
+main "$@"
