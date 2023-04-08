@@ -322,7 +322,7 @@ printf %s "\
 
 a|add [name] [url]  - Add bookmark.
 e|edit [name]       - Edit bookmark.
-o|open              - Open bookmarks list.
+o|open              - Open bookmark.
 d|delete [name]     - Delete bookmark.
 
 Define bookmarks file:      export BKM_FILE=~/.bookmarks/bkm.txt
