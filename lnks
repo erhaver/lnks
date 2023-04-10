@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
 
+getopt_simple()
+{
+    until [ -z "$1" ]
+    do
+      if [ ${1} = 'k' ] || [ ${1} = '-k' ]
+      then
+          keep_open=true
+      fi
+      shift
+    done
+}
+
 new_file() {
   mkdir -p $(dirname $1)
   touch $(basename $1)
@@ -283,16 +295,6 @@ if ! [ -x "$(command -v fzf)" ]; then
     exit 1
 fi
 
-keep_open=false
-
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        -k|--keep-open) keep_open=true ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
-    esac
-    shift
-done
-
 case "$OSTYPE" in
   darwin*)  open_command="open" ;;
   linux*)   open_command="xdg-open" ;;
@@ -326,11 +328,15 @@ o|open              - Open bookmark.
 d|delete [name]     - Delete bookmark.
 
 Define bookmarks file:      export BKM_FILE=~/.bookmarks/bkm.txt
+Use flag "-k" with open to keep script open: lnks o --k
 "
 exit
 }
 
 main() {
+    keep_open=false
+    getopt_simple "$@"
+
     action=$1
     name=$(sanitize "$2")
     url=$(sanitize "$3")
@@ -341,6 +347,7 @@ main() {
     index=
     existing_name=
     existing_url=
+
 
     case $action in
         a|add) bkm_add ;;
