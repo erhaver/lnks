@@ -328,7 +328,7 @@ o|open              - Open bookmark.
 d|delete [name]     - Delete bookmark.
 
 Define bookmarks file:      export BKM_FILE=~/.bookmarks/bkm.txt
-Use flag \"-k\" to keep script open:      lnks o --k
+Use flag \"-k\" to keep script open:      lnks o -k
 "
 exit
 }
