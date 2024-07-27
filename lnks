@@ -208,6 +208,8 @@ write_to_file() {
     printf '%s %s\n' "$name" "$url" >> "$BKM_FILE" || {
         die "Failed to write bookmark to file ${BKM_FILE}."
     }
+    sort "$BKM_FILE" -o "$BKM_FILE"
+
 }
 
 resolve_duplicates() {
@@ -328,7 +330,8 @@ o|open              - Open bookmark.
 d|delete [name]     - Delete bookmark.
 
 Define bookmarks file:      export BKM_FILE=~/.bookmarks/bkm.txt
-Use flag \"-k\" to keep script open:      lnks o -k
+Use flag \"-k\" to keep lnks open. Example: lnks o -k
+
 "
 exit
 }

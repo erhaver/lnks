@@ -40,6 +40,6 @@ a|add [name] [url]  - Add bookmark.
 e|edit [name]       - Edit bookmark.
 o|open              - Open bookmark with fzf search
 d|delete [name]     - Delete bookmark.
-Use flag "-k" to keep script open: lnks o -k
+Use flag "-k" to keep lnks open. Example: lnks o -k
 
 ```
